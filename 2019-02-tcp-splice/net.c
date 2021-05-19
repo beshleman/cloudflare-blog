@@ -209,7 +209,7 @@ int net_bind_unix_dgram()
 
 	server_sock = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if (server_sock == -1) {
-		printf("SOCKET ERROR = %d", sock_errno());
+		printf("SOCKET ERROR = %d", errno);
 		exit(1);
 	}
 
@@ -219,7 +219,7 @@ int net_bind_unix_dgram()
 	unlink(SOCK_PATH);
 	rc = bind(server_sock, (struct sockaddr *)&server_sockaddr, len);
 	if (rc == -1) {
-		printf("BIND ERROR = %d", sock_errno());
+		printf("BIND ERROR = %d", errno);
 		close(server_sock);
 		exit(1);
 	}
