@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/un.h>
 #include <time.h>
 
 #include "common.h"
@@ -193,6 +194,57 @@ const char *net_ntop(struct sockaddr_storage *ss)
 		FATAL("");
 	}
 	return a;
+}
+
+#define SOCK_PATH "/tmp/s1"
+
+int net_bind_unix_dgram()
+{
+	int server_sock, len, rc;
+	int bytes_rec = 0;
+	struct sockaddr_un server_sockaddr, peer_sock;
+	char buf[256];
+	memset(&server_sockaddr, 0, sizeof(struct sockaddr_un));
+	memset(buf, 0, 256);
+
+	server_sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (server_sock == -1) {
+		printf("SOCKET ERROR = %d", sock_errno());
+		exit(1);
+	}
+
+	server_sockaddr.sun_family = AF_UNIX;
+	strcpy(server_sockaddr.sun_path, SOCK_PATH);
+	len = sizeof(server_sockaddr);
+	unlink(SOCK_PATH);
+	rc = bind(server_sock, (struct sockaddr *)&server_sockaddr, len);
+	if (rc == -1) {
+		printf("BIND ERROR = %d", sock_errno());
+		close(server_sock);
+		exit(1);
+	}
+
+	return server_sock;
+}
+
+int net_connect_udp(struct sockaddr_storage *ss)
+{
+	int sockfd;
+	char buffer[1024];
+	char *hello = "Hello from client";
+
+	// Creating socket file descriptor
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("socket creation failed");
+		exit(EXIT_FAILURE);
+	}
+
+	// connect to server
+	if (connect(sockfd, (struct sockaddr *)&ss, sizeof(ss)) < 0) {
+		printf("\n Error : Connect Failed \n");
+		exit(0);
+	}
+	return sockfd;
 }
 
 int net_bind_tcp(struct sockaddr_storage *ss)
