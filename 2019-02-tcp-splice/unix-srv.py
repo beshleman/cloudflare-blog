@@ -24,11 +24,14 @@ s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 s.bind(path)
 print("Do Ctrl+c to exit the program !!")
 
+#s.connect(path)
+
 while True:
     print("####### Server is listening #######")
     data, addr = s.recvfrom(1024*8)
     print("\n\n Server received 1 len : ", len(data), "\n\n")
-    print("\n\n Server received  : ", data, "\n\n")
+    print("\n\n Server received addr : ", addr, "\n\n")
+
     data = s.recv(4096)
     print("\n\n Server received 2 len : ", len(data), "\n\n")
     send_data = input("Type some text to send => ")

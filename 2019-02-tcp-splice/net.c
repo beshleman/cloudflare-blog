@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/un.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "common.h"
 
@@ -240,8 +241,9 @@ int net_connect_udp(struct sockaddr_storage *ss)
 	}
 
 	// connect to server
-	if (connect(sockfd, (struct sockaddr *)&ss, sizeof(ss)) < 0) {
-		printf("\n Error : Connect Failed \n");
+	if (connect(sockfd, (struct sockaddr *)ss, sizeof_ss(ss)) < 0) {
+		printf("\n Error : Connect Failed,  \n");
+		perror(NULL);
 		exit(0);
 	}
 	return sockfd;

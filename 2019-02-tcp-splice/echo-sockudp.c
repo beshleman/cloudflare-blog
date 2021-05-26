@@ -10,6 +10,7 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/un.h>
 
 #include "common.h"
 #include "tbpf.h"
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
 		busy_poll = 1;
 	}
 
-	fprintf(stderr, "[+] Accepting on %s busy_poll=%d\n", net_ntop(&connect),
+	fprintf(stderr, "[+] connecting to %s busy_poll=%d\n", net_ntop(&connect),
 		busy_poll);
 
 	//int sd = net_bind_tcp(&listen);
