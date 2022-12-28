@@ -1,4 +1,4 @@
-all: venv/.ok
+all:
 	clang -g -Wall -Wextra -O2 \
 		net.c \
 		test-burst.c \
@@ -23,7 +23,7 @@ all: venv/.ok
 		echo-sockmap-kern.c \
 		-S -o - \
 		| llc -march=bpf -filetype=obj -o - \
-		| ./venv/bin/python3 tbpf-decode-elf.py /dev/stdin \
+		| python3 tbpf-decode-elf.py /dev/stdin \
 			prog_parser prog_verdict \
 		> echo-sockmap-ebpf.c
 
@@ -44,10 +44,6 @@ all: venv/.ok
 		-o echo-sockudp
 
 
-venv/.ok:
-	virtualenv venv --python=python3
-	./venv/bin/pip3 install pyelftools
-	touch $@
 
 .PHONY: format
 format:
