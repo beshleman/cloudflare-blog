@@ -1,23 +1,24 @@
+CFLAGS := -static
 all:
 	clang -g -Wall -Wextra -O2 \
 		net.c \
 		test-burst.c \
-		-o test-burst
+		-o test-burst $(CFLAGS)
 
 	clang -g -Wall -Wextra -O2 \
 		net.c \
 		echo-naive.c \
-		-o echo-naive
+		-o echo-naive $(CFLAGS)
 
 	clang -g -Wall -Wextra -O2 \
 		net.c \
 		echo-iosubmit.c \
-		-o echo-iosubmit
+		-o echo-iosubmit $(CFLAGS)
 
 	clang -g -Wall -Wextra -O2 \
 		net.c \
 		echo-splice.c \
-		-o echo-splice
+		-o echo-splice $(CFLAGS)
 
 	clang -Wall -Wextra -O2 -emit-llvm -c \
 		echo-sockmap-kern.c \
@@ -33,7 +34,7 @@ all:
 		echo-sockmap-ebpf.c \
 		echo-sockmap.c \
 		-l elf \
-		-o echo-sockmap
+		-o echo-sockmap $(CFLAGS)
 
 	clang -g -Wall -Wextra -O2 \
 		tbpf.c \
@@ -41,8 +42,15 @@ all:
 		echo-sockmap-ebpf.c \
 		echo-sockudp.c \
 		-l elf \
-		-o echo-sockudp
+		-o echo-sockudp $(CFLAGS)
 
+	clang -g -Wall -Wextra -O2 \
+		tbpf.c \
+		net.c \
+		echo-sockmap-ebpf.c \
+		echo-vsock.c \
+		-l elf \
+		-o echo-vsock $(CFLAGS)
 
 
 .PHONY: format
