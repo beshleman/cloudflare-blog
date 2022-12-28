@@ -5,3 +5,5 @@ echo-naive
 echo-splice
 echo-iosubmit
 test-burst
+echo-vsock
+echo-sockudp
