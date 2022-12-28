@@ -248,8 +248,7 @@ const char *net_ntop(struct sockaddr_storage *ss)
 int net_bind_unix_dgram()
 {
 	int server_sock, len, rc;
-	int bytes_rec = 0;
-	struct sockaddr_un server_sockaddr, peer_sock;
+	struct sockaddr_un server_sockaddr;
 	char buf[256];
 	memset(&server_sockaddr, 0, sizeof(struct sockaddr_un));
 	memset(buf, 0, 256);
@@ -277,8 +276,6 @@ int net_bind_unix_dgram()
 int net_connect_udp(struct sockaddr_storage *ss)
 {
 	int sockfd;
-	char buffer[1024];
-	char *hello = "Hello from client";
 
 	// Creating socket file descriptor
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
