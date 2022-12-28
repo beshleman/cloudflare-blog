@@ -26,6 +26,7 @@
 
 /* net.c */
 int net_parse_sockaddr(struct sockaddr_storage *ss, const char *addr);
+int vsock_parse_sockaddr(struct sockaddr_storage *ss, const char *addr);
 int net_connect_tcp_blocking(struct sockaddr_storage *sas, int do_zerocopy);
 int net_getpeername(int sd, struct sockaddr_storage *ss);
 int net_getsockname(int sd, struct sockaddr_storage *ss);

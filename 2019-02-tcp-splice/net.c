@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/un.h>
+#include <linux/vm_sockets.h>
 #include <time.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -23,6 +25,8 @@ static void net_addr_from_name(struct sockaddr_storage *ss, const char *host)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *)ss;
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)ss;
+	struct sockaddr_vm *svm = (struct sockaddr_vm *)ss;
+	unsigned int val;
 
 	if (inet_pton(AF_INET, host, &sin->sin_addr) == 1) {
 		sin->sin_family = AF_INET;
@@ -34,7 +38,40 @@ static void net_addr_from_name(struct sockaddr_storage *ss, const char *host)
 		return;
 	}
 
+	val = strtol(host, NULL, 10);
+	if (val < UINT_MAX) {
+		svm->svm_cid = val;
+		svm->svm_family = AF_VSOCK;
+		return;
+	}
+
 	PFATAL("inet_pton(%s)", host);
+}
+
+int vsock_parse_sockaddr(struct sockaddr_storage *ss, const char *addr)
+{
+	struct sockaddr_vm *svm = (struct sockaddr_vm *)ss;
+
+	memset(ss, 0, sizeof(struct sockaddr_storage));
+
+	char *colon = strrchr(addr, ':');
+	if (colon == NULL || colon[1] == '\0') {
+		FATAL("%s doesn't contain a port number.", addr);
+	}
+
+	char *endptr;
+	unsigned int port = strtoul(&colon[1], &endptr, 10);
+	if (port < 0 || port > UINT_MAX || *endptr != '\0') {
+		FATAL("Invalid port number %s", &colon[1]);
+	}
+
+	char host[255];
+	int addr_len = colon - addr > 254 ? 254 : colon - addr;
+	strncpy(host, addr, addr_len);
+	host[addr_len] = '\0';
+	net_addr_from_name(ss, host);
+	svm->svm_port = port;
+	return 0;
 }
 
 int net_parse_sockaddr(struct sockaddr_storage *ss, const char *addr)
@@ -60,6 +97,7 @@ int net_parse_sockaddr(struct sockaddr_storage *ss, const char *addr)
 
 	struct sockaddr_in *sin = (struct sockaddr_in *)ss;
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)ss;
+	struct sockaddr_vm *svm = (struct sockaddr_vm *)ss;
 
 	switch (ss->ss_family) {
 	case AF_INET:
@@ -67,6 +105,9 @@ int net_parse_sockaddr(struct sockaddr_storage *ss, const char *addr)
 		break;
 	case AF_INET6:
 		sin6->sin6_port = htons(port);
+		break;
+	case AF_VSOCK:
+		svm->svm_port = htonl(port);
 		break;
 	default:
 		FATAL("");
@@ -80,6 +121,8 @@ static size_t sizeof_ss(struct sockaddr_storage *ss)
 	case AF_INET:
 	case AF_INET6:
 		return sizeof(struct sockaddr_storage);
+	case AF_VSOCK:
+		return sizeof(struct sockaddr_vm);
 	default:
 		// AF_UNIX has sizeof defined in differnet way
 		FATAL("");
@@ -190,6 +233,9 @@ const char *net_ntop(struct sockaddr_storage *ss)
 		}
 		port = htons(sin6->sin6_port);
 		snprintf(a, sizeof(a), "[%s]:%i", s, port);
+		break;
+	case AF_VSOCK:
+		snprintf(a, sizeof(a), "%u:%u", svm->svm_cid, svm->svm_port);
 		break;
 	default:
 		FATAL("");
