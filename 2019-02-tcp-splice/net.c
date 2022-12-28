@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/tcp.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -214,6 +215,7 @@ const char *net_ntop(struct sockaddr_storage *ss)
 	static char a[INET6_ADDRSTRLEN + 32];
 	struct sockaddr_in *sin = (struct sockaddr_in *)ss;
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)ss;
+	struct sockaddr_vm *svm = (struct sockaddr_vm *)ss;
 	int port;
 	const char *r;
 	switch (ss->ss_family) {
@@ -271,6 +273,25 @@ int net_bind_unix_dgram()
 	}
 
 	return server_sock;
+}
+
+int net_connect_vsock_dgram(struct sockaddr_storage *ss)
+{
+	int sockfd;
+
+	// Creating socket file descriptor
+	if ((sockfd = socket(AF_VSOCK, SOCK_DGRAM, 0)) < 0) {
+		perror("socket creation failed");
+		exit(EXIT_FAILURE);
+	}
+
+	// connect to server
+	if (connect(sockfd, (struct sockaddr *)ss, sizeof_ss(ss)) < 0) {
+		printf("\n Error : Connect Failed,  \n");
+		perror(NULL);
+		exit(0);
+	}
+	return sockfd;
 }
 
 int net_connect_udp(struct sockaddr_storage *ss)

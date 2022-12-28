@@ -36,6 +36,7 @@ int net_accept(int sd, struct sockaddr_storage *ss);
 void set_nonblocking(int fd);
 int net_bind_unix_dgram();
 int net_connect_udp(struct sockaddr_storage *ss);
+int net_connect_vsock_dgram(struct sockaddr_storage *ss);
 
 /* inlines */
 #define TIMESPEC_NSEC(ts) ((ts)->tv_sec * 1000000000ULL + (ts)->tv_nsec)
