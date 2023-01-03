@@ -52,6 +52,14 @@ all:
 		-l elf \
 		-o echo-vsock $(CFLAGS)
 
+	clang -g -Wall -Wextra -O2 \
+		tbpf.c \
+		net.c \
+		echo-sockmap-ebpf.c \
+		echo-vsock-dgram.c \
+		-l elf \
+		-o echo-vsock-dgram $(CFLAGS)
+
 
 .PHONY: format
 format:
