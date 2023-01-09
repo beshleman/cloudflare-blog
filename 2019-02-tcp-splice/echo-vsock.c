@@ -24,6 +24,17 @@ extern size_t bpf_insn_prog_verdict_cnt;
 extern struct bpf_insn bpf_insn_prog_verdict[];
 extern struct tbpf_reloc bpf_reloc_prog_verdict[];
 
+static void usage(char *prog)
+{
+	fprintf(stderr, "Usage: %s <connect:port> [OPTIONS]\n", prog);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Create an echo server using vsock stream.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "\t-p\tbusy poll on the socket\n");
+	fprintf(stderr, "\t-q\tuse seqpacket instead of stream\n");
+}
+
 int main(int argc, char **argv)
 {
 	/* [*] SOCKMAP requires more than 16MiB of locked mem */
@@ -31,6 +42,28 @@ int main(int argc, char **argv)
 		.rlim_cur = 128 * 1024 * 1024,
 		.rlim_max = 128 * 1024 * 1024,
 	};
+
+	int busy_poll = 0;
+	int sotype = SOCK_STREAM;
+	int optc = 0;
+	int opt;
+
+	while ((opt = getopt(argc, argv, "pq")) != -1) {
+		switch (opt) {
+		case 'q':
+			sotype = SOCK_SEQPACKET;
+			break;
+		case 'p':
+			busy_poll = 1;
+			break;
+		default:
+			usage(argv[0]);
+			exit(1);
+			break;
+		}
+		optc++;
+	}
+
 	/* ignore error */
 	setrlimit(RLIMIT_MEMLOCK, &rlim);
 
@@ -63,18 +96,14 @@ int main(int argc, char **argv)
 		PFATAL("bpf(PROG_ATTACH)");
 	}
 
-	//add unix server and udp client to sockmap. udp client should be the key0
-	if (argc < 2) {
-		FATAL("Usage: %s <connect:port>", argv[0]);
+	if (argc - optc < 2) {
+		usage(argv[0]);
+		exit(1);
 	}
 
+	//add unix server and vsock client to sockmap. vsock client should be argv1
 	struct sockaddr_storage connect;
-	vsock_parse_sockaddr(&connect, argv[1]);
-
-	int busy_poll = 0;
-	if (argc > 2) {
-		busy_poll = 1;
-	}
+	vsock_parse_sockaddr(&connect, argv[optind]);
 
 	fprintf(stderr, "[+] connecting to %s busy_poll=%d\n", net_ntop(&connect),
 		busy_poll);
@@ -84,7 +113,7 @@ int main(int argc, char **argv)
 		PFATAL("bind()");
 	}
        
-	int cd = net_connect_vsock_dgram(&connect);
+	int cd = net_connect_vsock_connectible(&connect, sotype);
 	if (cd < 0) {
 		PFATAL("connect()");
 	}

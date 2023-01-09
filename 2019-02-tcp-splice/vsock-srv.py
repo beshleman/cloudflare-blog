@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import argparse
+import select
 import socket
 import sys
 
@@ -7,6 +9,7 @@ import signal
 import sys
 from timeit import default_timer as timer
 
+server = None
 start = timer()
 
 def signal_handler(sig, frame):
@@ -16,27 +19,39 @@ def signal_handler(sig, frame):
     print("time ", end - start)
     print("got data ", tot)
     print("speed ", tot / elp / 1024 )
+    if server is not None:
+        server.close()
     s.close()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
 
+parser = argparse.ArgumentParser()
+parser.add_argument('cid', type=int)
+parser.add_argument('port', type=int)
+parser.add_argument('type', choices=['dgram', 'seqpacket', 'stream'])
+args = parser.parse_args()
 
+# Create a socket
+sotype = {
+    'dgram': socket.SOCK_DGRAM,
+    'seqpacket': socket.SOCK_SEQPACKET,
+    'stream': socket.SOCK_STREAM,
+}.get(args.type)
+s = socket.socket(socket.AF_VSOCK, sotype)
 
-if len(sys.argv) == 3:
-    # Get "IP address of Server" and also the "port number" from
-    #argument 1 and argument 2
-    cid = int(sys.argv[1])
-    port = int(sys.argv[2])
-else:
-    print("Run like : python3 server.py CID PORT")
-    exit(1)
-
-# Create a UDP socket
-s = socket.socket(socket.AF_VSOCK, socket.SOCK_DGRAM)
 # Bind the socket to the port
-server_address = (cid, port)
+server_address = (args.cid, args.port)
 s.bind(server_address)
+if args.type != 'dgram':
+    s.listen(1)
+
+    select.select([s], [], [])
+    conn, addr = s.accept()
+    server = s
+    s = conn
+
+
 print("Do Ctrl+c to exit the program !!")
 
 first=True

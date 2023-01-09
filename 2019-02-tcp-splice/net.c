@@ -275,6 +275,25 @@ int net_bind_unix_dgram()
 	return server_sock;
 }
 
+int net_connect_vsock_connectible(struct sockaddr_storage *ss, int sotype)
+{
+	int sockfd;
+
+	// Creating socket file descriptor
+	if ((sockfd = socket(AF_VSOCK, sotype, 0)) < 0) {
+		perror("socket creation failed");
+		exit(EXIT_FAILURE);
+	}
+
+	// connect to server
+	if (connect(sockfd, (struct sockaddr *)ss, sizeof_ss(ss)) < 0) {
+		printf("\n Error : Connect Failed,  \n");
+		perror(NULL);
+		exit(0);
+	}
+	return sockfd;
+}
+
 int net_connect_vsock_dgram(struct sockaddr_storage *ss)
 {
 	int sockfd;
