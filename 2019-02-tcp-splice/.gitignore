@@ -7,3 +7,4 @@ echo-iosubmit
 test-burst
 echo-vsock
 echo-sockudp
+echo-vsock-dgram
