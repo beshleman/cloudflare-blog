@@ -1,0 +1,31 @@
+name: Build kernel
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu
+    container:
+      image: beshleman/debian:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build sockmap server and client
+      run: |
+        cd 2019-02-tcp-splice/
+        make
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: sockmap_executables
+        path: |
+          2019-02-tcp-splice/echo-vsock-dgram
+          2019-02-tcp-splice/echo-vsock
+          2019-02-tcp-splice/echo-sockudp
+          2019-02-tcp-splice/echo-sockmap
